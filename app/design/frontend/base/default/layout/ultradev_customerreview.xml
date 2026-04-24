@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<layout version="0.1.0">
+    <ultradev_customerreview_index_index>
+        <reference name="content">
+            <block type="ultradev_customerreview/store" name="customerreview.store" template="ultradev/customerreview/store.phtml" />
+        </reference>
+    </ultradev_customerreview_index_index>
+</layout>
