@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <UltraDev_CustomerReview>
+            <active>true</active>
+            <codePool>community</codePool>
+            <depends>
+                <Mage_Review/>
+            </depends>
+        </UltraDev_CustomerReview>
+    </modules>
+</config>
