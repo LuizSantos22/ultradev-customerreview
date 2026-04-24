@@ -102,10 +102,6 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
 
         $sql .= " JOIN {$voteTable} v ON v.review_id = r.review_id ";
 
-        if ($this->_storeId !== null) {
-            $sql .= " AND v.store_id = :store_id ";
-        }
-
         $sql .= " WHERE r.status_id = :status_approved ";
 
         $row = $read->fetchRow($sql, $bind);
