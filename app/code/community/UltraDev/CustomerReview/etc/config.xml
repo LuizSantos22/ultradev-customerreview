@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <UltraDev_CustomerReview>
+            <version>0.1.0</version>
+        </UltraDev_CustomerReview>
+    </modules>
+
+    <global>
+        <helpers>
+            <ultradev_customerreview>
+                <class>UltraDev_CustomerReview_Helper</class>
+            </ultradev_customerreview>
+        </helpers>
+        <blocks>
+            <ultradev_customerreview>
+                <class>UltraDev_CustomerReview_Block</class>
+            </ultradev_customerreview>
+        </blocks>
+    </global>
+
+    <frontend>
+        <routers>
+            <ultradev_customerreview>
+                <use>standard</use>
+                <args>
+                    <module>UltraDev_CustomerReview</module>
+                    <frontName>siteconfiavel</frontName>
+                </args>
+            </ultradev_customerreview>
+        </routers>
+        <layout>
+            <updates>
+                <ultradev_customerreview>
+                    <file>ultradev_customerreview.xml</file>
+                </ultradev_customerreview>
+            </layout>
+        </layout>
+    </frontend>
+</config>
