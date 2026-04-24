@@ -1,6 +1,6 @@
 {
     "name": "ultradev/customerreview",
-    "description": "Página /siteconfiavel com agregação de reviews para OpenMage 20.x + Ultimo",
+    "description": "Customer review page for OpenMage 20.x — aggregates approved store reviews with SVG rating circle, star distribution, pagination and Schema.org markup",
     "type": "magento-module",
     "license": "MIT",
     "authors": [
@@ -10,13 +10,9 @@
         }
     ],
     "require": {
-        "php": ">=8.1",
-        "openmage/magento-lts": ">=20.0.0"
+        "php": ">=8.1"
     },
     "extra": {
         "magento-root-dir": "../../"
-    },
-    "autoload": {
-        "files": []
     }
 }
