@@ -1,5 +1,12 @@
 app/etc/modules/UltraDev_CustomerReview.xml                              app/etc/modules/UltraDev_CustomerReview.xml
 app/code/community/UltraDev/CustomerReview                               app/code/community/UltraDev/CustomerReview
+
+# Ultimo theme
 app/design/frontend/ultimo/default/layout/ultradev_customerreview.xml    app/design/frontend/ultimo/default/layout/ultradev_customerreview.xml
 app/design/frontend/ultimo/default/template/ultradev/customerreview      app/design/frontend/ultimo/default/template/ultradev/customerreview
 skin/frontend/ultimo/default/css/ultradev/customerreview.css             skin/frontend/ultimo/default/css/ultradev/customerreview.css
+
+# Base/default theme (fallback)
+app/design/frontend/base/default/layout/ultradev_customerreview.xml      app/design/frontend/base/default/layout/ultradev_customerreview.xml
+app/design/frontend/base/default/template/ultradev/customerreview        app/design/frontend/base/default/template/ultradev/customerreview
+skin/frontend/base/default/css/ultradev/customerreview.css               skin/frontend/base/default/css/ultradev/customerreview.css
