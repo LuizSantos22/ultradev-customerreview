@@ -1,0 +1,246 @@
+<?php
+/**
+ * @var UltraDev_CustomerReview_Block_Store $this
+ */
+$helper    = Mage::helper('ultradev_customerreview');
+$agg       = $this->getAggregatedData();
+$reviews   = $this->getReviews();
+$storeName = $this->getStoreName();
+$curPage   = $this->getCurrentPage();
+$lastPage  = $this->getLastPage();
+$curFilter = $this->getCurrentRatingFilter();
+?>
+<script type="application/ld+json">
+<?php echo $this->getStoreSchemaJson(); ?>
+</script>
+
+<div class="cr-wrapper">
+    <div class="cr-inner">
+        <div class="cr-layout">
+
+            <!-- ================================================
+                 SIDEBAR — rating global + distribuição
+                 ================================================ -->
+            <div class="cr-sidebar">
+
+                <div class="cr-global-box">
+                    <svg class="cr-svg cr-svg--large" viewBox="0 0 100 100">
+                        <path fill="none" stroke-width="7" stroke="#f2f2f2"
+                              d="M50 10 a 40 40 0 0 1 0 80 a 40 40 0 0 1 0 -80"/>
+                        <path fill="none"
+                              class="cr-progress"
+                              stroke-linecap="round"
+                              stroke-width="7"
+                              stroke="#ffca00"
+                              d="M50 10 a 40 40 0 0 1 0 80 a 40 40 0 0 1 0 -80"
+                              data-percent="<?php echo $agg['avg_percent']; ?>"
+                              style="stroke-dasharray:251.327,251.327;stroke-dashoffset:<?php echo $agg['dash_offset']; ?>"/>
+                        <text x="50" y="46" text-anchor="middle"
+                              font-size="28" fill="#ffca00" font-weight="bold">
+                            <?php echo number_format($agg['avg_stars'], 1); ?>
+                        </text>
+                        <text x="50" y="62" text-anchor="middle" font-size="7" fill="#666">
+                            Avaliação do
+                        </text>
+                        <text x="50" y="71" text-anchor="middle" font-size="7" fill="#666">
+                            Site
+                        </text>
+                    </svg>
+                    <p class="cr-total-label">
+                        <strong><?php echo $agg['total']; ?></strong>
+                        <?php echo $this->__('avaliações de clientes'); ?>
+                    </p>
+                </div>
+
+                <div class="cr-distribution">
+                    <?php for ($star = 5; $star >= 1; $star--):
+                        $isActive = ($curFilter !== '' && (int)$curFilter === $star);
+                        $url = $isActive
+                            ? $this->getClearFilterUrl()
+                            : $this->getRatingFilterUrl($star);
+                    ?>
+                    <a href="<?php echo $url; ?>"
+                       class="cr-dist-row<?php echo $isActive ? ' cr-dist-row--active' : ''; ?>">
+                        <span class="cr-dist-stars">
+                            <?php for ($s = 1; $s <= 5; $s++): ?>
+                            <i class="fa fa-star<?php echo $s <= $star ? '' : '-o'; ?>"></i>
+                            <?php endfor; ?>
+                        </span>
+                        <span class="cr-dist-bar">
+                            <span class="cr-dist-bar__fill"
+                                  style="width:<?php echo $agg['distribution'][$star]; ?>%"></span>
+                        </span>
+                        <span class="cr-dist-pct">
+                            <?php echo number_format($agg['distribution'][$star], 1); ?>%
+                        </span>
+                    </a>
+                    <?php endfor; ?>
+
+                    <?php if ($curFilter !== ''): ?>
+                    <a href="<?php echo $this->getClearFilterUrl(); ?>" class="cr-clear-filter">
+                        <i class="fa fa-times"></i>
+                        <?php echo $this->__('Limpar filtro'); ?>
+                    </a>
+                    <?php endif; ?>
+                </div>
+
+            </div>
+
+            <!-- ================================================
+                 MAIN — título + lista + paginação
+                 ================================================ -->
+            <div class="cr-main">
+
+                <h1 class="cr-page-title">
+                    <strong><?php echo $this->escapeHtml($storeName); ?></strong>
+                    <?php echo $this->__('é um site confiável?'); ?>
+                </h1>
+
+                <?php if (empty($reviews)): ?>
+                <p class="cr-empty">
+                    <?php echo $this->__('Nenhuma avaliação encontrada.'); ?>
+                    <?php if ($curFilter !== ''): ?>
+                    <a href="<?php echo $this->getClearFilterUrl(); ?>">
+                        <?php echo $this->__('Ver todas'); ?>
+                    </a>
+                    <?php endif; ?>
+                </p>
+
+                <?php else: ?>
+
+                <ul class="cr-list">
+                    <?php foreach ($reviews as $item): ?>
+                    <li class="cr-item">
+
+                        <!-- Autor -->
+                        <div class="cr-author">
+                            <div class="cr-author__icon">
+                                <i class="fa fa-user-circle-o"></i>
+                            </div>
+                            <div class="cr-author__name">
+                                <?php echo $this->escapeHtml($item['nickname']); ?>
+                            </div>
+                            <div class="cr-author__stars">
+                                <?php for ($s = 1; $s <= 5; $s++): ?>
+                                <i class="fa fa-star<?php echo $s <= $item['star_int'] ? '' : '-o'; ?>"></i>
+                                <?php endfor; ?>
+                            </div>
+                        </div>
+
+                        <!-- Conteúdo -->
+                        <div class="cr-content">
+                            <span class="cr-date">
+                                <?php echo $this->__('Avaliado em'); ?>
+                                <time datetime="<?php echo $this->escapeHtml($item['created_at']); ?>">
+                                    <?php echo $helper->formatDate($item['created_at']); ?>
+                                </time>
+                            </span>
+
+                            <?php if ($item['title'] !== ''): ?>
+                            <p class="cr-content__label"><?php echo $this->__('Resumo'); ?></p>
+                            <p class="cr-content__text">
+                                <?php echo $this->escapeHtml($item['title']); ?>
+                            </p>
+                            <?php endif; ?>
+
+                            <?php if ($item['detail'] !== ''): ?>
+                            <p class="cr-content__label"><?php echo $this->__('Comentário'); ?></p>
+                            <p class="cr-content__text">
+                                <?php echo nl2br($this->escapeHtml($item['detail'])); ?>
+                            </p>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Círculo SVG individual -->
+                        <div class="cr-score-box">
+                            <svg class="cr-svg cr-svg--small" viewBox="0 0 100 100">
+                                <path fill="none" stroke-width="8" stroke="#f2f2f2"
+                                      d="M50 10 a 40 40 0 0 1 0 80 a 40 40 0 0 1 0 -80"/>
+                                <path fill="none"
+                                      class="cr-progress"
+                                      stroke-linecap="round"
+                                      stroke-width="8"
+                                      stroke="#ffca00"
+                                      d="M50 10 a 40 40 0 0 1 0 80 a 40 40 0 0 1 0 -80"
+                                      data-percent="<?php echo $item['avg_percent']; ?>"
+                                      style="stroke-dasharray:251.327,251.327;stroke-dashoffset:<?php echo $item['dash_offset']; ?>"/>
+                                <text x="50" y="40" text-anchor="middle"
+                                      font-size="10" fill="#999">
+                                    <?php echo $this->__('Nota'); ?>
+                                </text>
+                                <text x="50" y="65" text-anchor="middle"
+                                      font-size="30" fill="#ffca00" font-weight="bold">
+                                    <?php echo number_format($item['avg_stars'], 1); ?>
+                                </text>
+                            </svg>
+                        </div>
+
+                        <script type="application/ld+json">
+                        <?php echo $this->getReviewSchemaJson($item); ?>
+                        </script>
+
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+
+                <!-- Paginação -->
+                <?php if ($lastPage > 1): ?>
+                <nav class="cr-pagination" aria-label="<?php echo $this->__('Navegação de páginas'); ?>">
+                    <?php
+                    $window = 2;
+                    $start  = max(1, $curPage - $window);
+                    $end    = min($lastPage, $curPage + $window);
+                    ?>
+
+                    <?php if ($curPage > 1): ?>
+                    <a class="cr-page-btn" href="<?php echo $this->getPageUrl($curPage - 1); ?>"
+                       aria-label="<?php echo $this->__('Anterior'); ?>">
+                        <i class="fa fa-chevron-left"></i>
+                    </a>
+                    <?php endif; ?>
+
+                    <?php if ($start > 1): ?>
+                    <a class="cr-page-btn" href="<?php echo $this->getPageUrl(1); ?>">1</a>
+                    <?php if ($start > 2): ?>
+                    <span class="cr-page-ellipsis">&hellip;</span>
+                    <?php endif; ?>
+                    <?php endif; ?>
+
+                    <?php for ($p = $start; $p <= $end; $p++): ?>
+                    <?php if ($p === $curPage): ?>
+                    <span class="cr-page-btn cr-page-btn--active" aria-current="page">
+                        <?php echo $p; ?>
+                    </span>
+                    <?php else: ?>
+                    <a class="cr-page-btn" href="<?php echo $this->getPageUrl($p); ?>">
+                        <?php echo $p; ?>
+                    </a>
+                    <?php endif; ?>
+                    <?php endfor; ?>
+
+                    <?php if ($end < $lastPage): ?>
+                    <?php if ($end < $lastPage - 1): ?>
+                    <span class="cr-page-ellipsis">&hellip;</span>
+                    <?php endif; ?>
+                    <a class="cr-page-btn" href="<?php echo $this->getPageUrl($lastPage); ?>">
+                        <?php echo $lastPage; ?>
+                    </a>
+                    <?php endif; ?>
+
+                    <?php if ($curPage < $lastPage): ?>
+                    <a class="cr-page-btn" href="<?php echo $this->getPageUrl($curPage + 1); ?>"
+                       aria-label="<?php echo $this->__('Próxima'); ?>">
+                        <i class="fa fa-chevron-right"></i>
+                    </a>
+                    <?php endif; ?>
+
+                </nav>
+                <?php endif; ?>
+
+                <?php endif; ?>
+
+            </div>
+
+        </div>
+    </div>
+</div>
