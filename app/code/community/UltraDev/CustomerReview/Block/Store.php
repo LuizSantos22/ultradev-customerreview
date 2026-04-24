@@ -47,7 +47,7 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
         ];
     }
 
-    protected function getCacheKey(): string
+    public function getCacheKey(): string
     {
         $parts = [
             'ultradev_customerreview',
