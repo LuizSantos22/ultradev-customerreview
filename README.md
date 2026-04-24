@@ -72,8 +72,16 @@ Or via admin: **System → Cache Management → Flush All**
 
 ## Configuration
 
-No configuration needed. The module reads directly from the native
-`Mage_Review` and `Mage_Rating` tables.
+### Reviews Scope
+
+Go to **System → Configuration → UltraDev Customer Review → General Settings**.
+
+| Option | Behavior |
+|--------|----------|
+| Yes (default) | Shows reviews from the current store view only |
+| No | Aggregates reviews from all store views |
+
+### Ratings
 
 To control which ratings appear, go to:
 **Catalog → Reviews and Ratings → Manage Ratings**
@@ -85,8 +93,15 @@ and set the ratings you want as **Visible**.
 - Aggregation query uses a single SQL JOIN, zero N+1 queries
 - `addRateVotes()` loads all votes in one query per page load
 - SVG circle uses `stroke-dashoffset` calculated server-side (no JS required for rendering)
+- Block cache: 1-hour TTL, keyed by store, rating filter, and page number
+- Cache is automatically flushed when configuration is saved
 
 ## URL
 
 The default frontend URL is `/siteconfiavel`.  
 To change it, edit `<frontName>` in:
+`app/code/community/UltraDev/CustomerReview/etc/config.xml`
+
+## License
+
+MIT
