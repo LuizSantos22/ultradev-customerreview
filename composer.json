@@ -1,0 +1,22 @@
+{
+    "name": "ultradev/customerreview",
+    "description": "Página /siteconfiavel com agregação de reviews para OpenMage 20.x + Ultimo",
+    "type": "magento-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "UltraDev",
+            "homepage": "https://github.com/LuizSantos22"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "openmage/magento-lts": ">=20.0.0"
+    },
+    "extra": {
+        "magento-root-dir": "../../"
+    },
+    "autoload": {
+        "files": []
+    }
+}
