@@ -15,6 +15,7 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
     protected int $_storeId;
     protected ?array $_aggregated = null;
     protected ?array $_reviews    = null;
+    protected ?int   $_lastPage   = null;
 
     protected function _construct()
     {
@@ -24,11 +25,11 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
     }
 
     // ------------------------------------------------------------------
-    // Dados agregados — única query SQL, zero N+1
+    // Aggregated data — single SQL query, zero N+1
     // ------------------------------------------------------------------
 
     /**
-     * Retorna dados agregados de todos os reviews aprovados da store:
+     * Returns aggregated data for all approved reviews in the current store:
      * avg_percent, avg_stars, total, distribution[5..1], dash_offset
      *
      * @return array
@@ -96,11 +97,12 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
     }
 
     // ------------------------------------------------------------------
-    // Lista paginada — addRateVotes() evita N+1 nos votos
+    // Paginated review list — filter applied in SQL, not in PHP array
     // ------------------------------------------------------------------
 
     /**
-     * Retorna array de reviews enriquecidos para o template
+     * Returns enriched array of reviews for the template.
+     * Star filter is pushed into the SQL query so pagination is always correct.
      *
      * @return array
      */
@@ -122,6 +124,17 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
             ->setDateOrder()
             ->addRateVotes();
 
+        // Push star filter into SQL before pagination runs.
+        // Note: addRateVotes() joins the vote table with alias "rating_vote".
+        // If your OpenMage version uses a different alias, inspect
+        // $collection->getSelect()->__toString() to confirm.
+        if ($filter !== null && $filter !== '') {
+            $collection->getSelect()->having(
+                'ROUND(AVG(rating_vote.percent) / 20) = ?',
+                (int) $filter
+            );
+        }
+
         $collection->getSelect()->order('main_table.review_id DESC');
         $collection->setPageSize(self::REVIEWS_PER_PAGE);
         $collection->setCurPage($page);
@@ -142,11 +155,6 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
             $avgStars   = $helper->percentToStars($avgPercent);
             $starInt    = (int) round($avgStars);
 
-            // filtro por estrelas (inteiro)
-            if ($filter !== null && $filter !== '' && $starInt !== (int) $filter) {
-                continue;
-            }
-
             $items[] = [
                 'review_id'   => (int) $review->getId(),
                 'nickname'    => (string) $review->getNickname(),
@@ -165,7 +173,7 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
     }
 
     // ------------------------------------------------------------------
-    // Paginação
+    // Pagination
     // ------------------------------------------------------------------
 
     public function getCurrentPage(): int
@@ -173,15 +181,40 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
         return max(1, (int) $this->getRequest()->getParam('p', 1));
     }
 
+    /**
+     * Returns the last page number for the current filter.
+     * Result is cached to avoid a second database query per request.
+     * Applies the same star filter used in getReviews() so the page
+     * count always matches what is actually displayed.
+     *
+     * @return int
+     */
     public function getLastPage(): int
     {
-        $total = Mage::getModel('review/review')
+        if ($this->_lastPage !== null) {
+            return $this->_lastPage;
+        }
+
+        $filter = $this->getRequest()->getParam('rating');
+
+        $collection = Mage::getModel('review/review')
             ->getCollection()
             ->addStoreFilter($this->_storeId)
-            ->addStatusFilter(Mage_Review_Model_Review::STATUS_APPROVED)
-            ->getSize();
+            ->addStatusFilter(Mage_Review_Model_Review::STATUS_APPROVED);
 
-        return max(1, (int) ceil($total / self::REVIEWS_PER_PAGE));
+        // Mirror the same filter applied in getReviews()
+        if ($filter !== null && $filter !== '') {
+            $collection->addRateVotes();
+            $collection->getSelect()->having(
+                'ROUND(AVG(rating_vote.percent) / 20) = ?',
+                (int) $filter
+            );
+        }
+
+        $total = $collection->getSize();
+        $this->_lastPage = max(1, (int) ceil($total / self::REVIEWS_PER_PAGE));
+
+        return $this->_lastPage;
     }
 
     public function getPageUrl(int $page): string
@@ -220,7 +253,7 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
             '@context'        => 'http://schema.org/',
             '@type'           => 'Store',
             'name'            => $this->getStoreName(),
-            'description'     => $this->getStoreName() . ' super confiável',
+            'description'     => $this->getStoreName() . ' trusted store',
             'aggregateRating' => [
                 '@type'       => 'AggregateRating',
                 'ratingValue' => (string) $agg['avg_stars'],
@@ -237,7 +270,7 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
             '@type'        => 'Review',
             'itemReviewed' => [
                 '@type' => 'Store',
-                'name'  => $this->getStoreName() . ' é um site confiável?',
+                'name'  => $this->getStoreName(),
             ],
             'reviewRating' => [
                 '@type'       => 'Rating',
@@ -257,7 +290,7 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
     }
 
     // ------------------------------------------------------------------
-    // Internos
+    // Internal helpers
     // ------------------------------------------------------------------
 
     public function getStoreName(): string
