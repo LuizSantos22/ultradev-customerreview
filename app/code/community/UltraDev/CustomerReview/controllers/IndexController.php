@@ -6,6 +6,7 @@
  * @package   UltraDev_CustomerReview
  * @author    UltraDev
  * @license   MIT
+ * @link      https://github.com/LuizSantos22/ultradev-customerreview
  */
 class UltraDev_CustomerReview_IndexController extends Mage_Core_Controller_Front_Action
 {
