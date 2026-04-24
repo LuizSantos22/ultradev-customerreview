@@ -12,7 +12,7 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
 {
     const REVIEWS_PER_PAGE = 20;
 
-    protected int $_storeId;
+    protected ?int $_storeId   = null; // null = all stores, int = specific store
     protected ?array $_aggregated = null;
     protected ?array $_reviews    = null;
     protected ?int   $_lastPage   = null;
@@ -21,7 +21,41 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
     {
         parent::_construct();
         $this->setTemplate('ultradev/customerreview/store.phtml');
-        $this->_storeId = (int) Mage::app()->getStore()->getId();
+
+        $helper = $this->_getHelper();
+        if ($helper->isStoreScopeEnabled()) {
+            $this->_storeId = (int) Mage::app()->getStore()->getId();
+        } else {
+            $this->_storeId = null;
+        }
+
+        // Block cache: 1 hour, respects store scope and URL parameters
+        $this->addData([
+            'cache_lifetime' => 3600,
+            'cache_tags'     => ['ultradev_customerreview', 'review'],
+            'cache_key'      => $this->getCacheKey(),
+        ]);
+    }
+
+    public function getCacheKeyInfo()
+    {
+        return [
+            'ultradev_customerreview_store',
+            $this->_storeId ?? 'all',
+            $this->getRequest()->getParam('rating', 'all'),
+            $this->getRequest()->getParam('p', 1)
+        ];
+    }
+
+    protected function getCacheKey(): string
+    {
+        $parts = [
+            'ultradev_customerreview',
+            $this->_storeId ?? 'all',
+            $this->getRequest()->getParam('rating', 'all'),
+            'p' . $this->getRequest()->getParam('p', 1)
+        ];
+        return implode('_', $parts);
     }
 
     // ------------------------------------------------------------------
@@ -29,8 +63,9 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
     // ------------------------------------------------------------------
 
     /**
-     * Returns aggregated data for all approved reviews in the current store:
-     * avg_percent, avg_stars, total, distribution[5..1], dash_offset
+     * Returns aggregated data for all approved reviews:
+     * - If store scope is enabled: only current store
+     * - If store scope is disabled: all stores
      *
      * @return array
      */
@@ -55,18 +90,25 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
                 SUM(CASE WHEN ROUND(v.percent / 20) = 3 THEN 1 ELSE 0 END)     AS star3,
                 SUM(CASE WHEN ROUND(v.percent / 20) = 2 THEN 1 ELSE 0 END)     AS star2,
                 SUM(CASE WHEN ROUND(v.percent / 20) = 1 THEN 1 ELSE 0 END)     AS star1
-            FROM   {$reviewTable}  r
-            JOIN   {$storeTable}   rs ON rs.review_id = r.review_id
-                                      AND rs.store_id  = :store_id
-            JOIN   {$voteTable}    v  ON v.review_id  = r.review_id
-                                      AND v.store_id   = :store_id
-            WHERE  r.status_id = :status_approved
+            FROM   {$reviewTable} r
         ";
 
-        $row = $read->fetchRow($sql, [
-            ':store_id'        => $this->_storeId,
-            ':status_approved' => Mage_Review_Model_Review::STATUS_APPROVED,
-        ]);
+        $bind = [':status_approved' => Mage_Review_Model_Review::STATUS_APPROVED];
+
+        if ($this->_storeId !== null) {
+            $sql .= " JOIN {$storeTable} rs ON rs.review_id = r.review_id AND rs.store_id = :store_id ";
+            $bind[':store_id'] = $this->_storeId;
+        }
+
+        $sql .= " JOIN {$voteTable} v ON v.review_id = r.review_id ";
+
+        if ($this->_storeId !== null) {
+            $sql .= " AND v.store_id = :store_id ";
+        }
+
+        $sql .= " WHERE r.status_id = :status_approved ";
+
+        $row = $read->fetchRow($sql, $bind);
 
         $helper     = $this->_getHelper();
         $avgPercent = (float) ($row['avg_percent'] ?? 0);
@@ -117,17 +159,17 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
         $helper = $this->_getHelper();
 
         /** @var Mage_Review_Model_Resource_Review_Collection $collection */
-        $collection = Mage::getModel('review/review')
-            ->getCollection()
-            ->addStoreFilter($this->_storeId)
-            ->addStatusFilter(Mage_Review_Model_Review::STATUS_APPROVED)
-            ->setDateOrder()
-            ->addRateVotes();
+        $collection = Mage::getModel('review/review')->getCollection();
+
+        if ($this->_storeId !== null) {
+            $collection->addStoreFilter($this->_storeId);
+        }
+
+        $collection->addStatusFilter(Mage_Review_Model_Review::STATUS_APPROVED)
+                   ->setDateOrder()
+                   ->addRateVotes();
 
         // Push star filter into SQL before pagination runs.
-        // Note: addRateVotes() joins the vote table with alias "rating_vote".
-        // If your OpenMage version uses a different alias, inspect
-        // $collection->getSelect()->__toString() to confirm.
         if ($filter !== null && $filter !== '') {
             $collection->getSelect()->having(
                 'ROUND(AVG(rating_vote.percent) / 20) = ?',
@@ -197,10 +239,13 @@ class UltraDev_CustomerReview_Block_Store extends Mage_Core_Block_Template
 
         $filter = $this->getRequest()->getParam('rating');
 
-        $collection = Mage::getModel('review/review')
-            ->getCollection()
-            ->addStoreFilter($this->_storeId)
-            ->addStatusFilter(Mage_Review_Model_Review::STATUS_APPROVED);
+        $collection = Mage::getModel('review/review')->getCollection();
+
+        if ($this->_storeId !== null) {
+            $collection->addStoreFilter($this->_storeId);
+        }
+
+        $collection->addStatusFilter(Mage_Review_Model_Review::STATUS_APPROVED);
 
         // Mirror the same filter applied in getReviews()
         if ($filter !== null && $filter !== '') {
