@@ -1,8 +1,28 @@
 <?xml version="1.0"?>
 <layout version="0.1.0">
+
     <ultradev_customerreview_index_index>
-        <reference name="content">
-            <block type="ultradev_customerreview/store" name="customerreview.store" template="ultradev/customerreview/store.phtml" />
+
+        <reference name="root">
+            <action method="setTemplate">
+                <template>page/1column.phtml</template>
+            </action>
         </reference>
+
+        <reference name="head">
+            <!-- CSS comum – se não existir no base, não quebra, mas é recomendado criar -->
+            <action method="addItem">
+                <type>skin_css</type>
+                <name>css/ultradev/customerreview.css</name>
+            </action>
+        </reference>
+
+        <reference name="content">
+            <block type="ultradev_customerreview/store"
+                   name="ultradev.customerreview.store"
+                   template="ultradev/customerreview/store.phtml"/>
+        </reference>
+
     </ultradev_customerreview_index_index>
+
 </layout>
