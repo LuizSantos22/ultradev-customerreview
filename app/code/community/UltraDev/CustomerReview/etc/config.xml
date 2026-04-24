@@ -17,6 +17,11 @@
                 <class>UltraDev_CustomerReview_Block</class>
             </ultradev_customerreview>
         </blocks>
+        <models>
+            <ultradev_customerreview>
+                <class>UltraDev_CustomerReview_Model</class>
+            </ultradev_customerreview>
+        </models>
     </global>
 
     <frontend>
@@ -34,7 +39,28 @@
                 <ultradev_customerreview>
                     <file>ultradev_customerreview.xml</file>
                 </ultradev_customerreview>
-            </layout>
+            </updates>
         </layout>
     </frontend>
+
+    <adminhtml>
+        <events>
+            <admin_system_config_changed_section_ultradev_customerreview>
+                <observers>
+                    <ultradev_customerreview>
+                        <class>ultradev_customerreview/observer</class>
+                        <method>flushCache</method>
+                    </ultradev_customerreview>
+                </observers>
+            </admin_system_config_changed_section_ultradev_customerreview>
+        </events>
+    </adminhtml>
+
+    <default>
+        <ultradev_customerreview>
+            <general>
+                <scope_store>1</scope_store>
+            </general>
+        </ultradev_customerreview>
+    </default>
 </config>
