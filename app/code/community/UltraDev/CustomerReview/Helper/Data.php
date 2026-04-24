@@ -10,11 +10,21 @@
  */
 class UltraDev_CustomerReview_Helper_Data extends Mage_Core_Helper_Abstract
 {
-    /** Circunferência do path SVG: 2 * π * r(40) */
+    /** Circumference for SVG circle with radius 40: 2 * π * 40 ≈ 251.3274 */
     const SVG_CIRCUMFERENCE = 251.327;
 
     /**
-     * Converte percentual 0-100 para stroke-dashoffset do SVG
+     * Check if reviews should be filtered by current store view
+     *
+     * @return bool
+     */
+    public function isStoreScopeEnabled(): bool
+    {
+        return (bool) Mage::getStoreConfigFlag('ultradev_customerreview/general/scope_store');
+    }
+
+    /**
+     * Converts percentual 0-100 to stroke-dashoffset for SVG
      *
      * @param  float $percent
      * @return float
@@ -26,7 +36,7 @@ class UltraDev_CustomerReview_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * Converte percentual 0-100 para escala 0.0-5.0
+     * Converts percentual 0-100 to star rating 0.0-5.0
      *
      * @param  float $percent
      * @return float
@@ -37,7 +47,7 @@ class UltraDev_CustomerReview_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * Formata data para dd/mm/yyyy
+     * Formats date to dd/mm/yyyy
      *
      * @param  string $date
      * @return string
@@ -51,7 +61,7 @@ class UltraDev_CustomerReview_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * Nome do frontend da store atual
+     * Returns current store frontend name
      *
      * @return string
      */
