@@ -1,0 +1,353 @@
+
+
+<?php
+/**
+ * @var UltraDev_CustomerReview_Block_Product $this
+ */
+$helper   = Mage::helper('ultradev_customerreview');
+$agg      = $this->getAggregatedData();
+$reviews  = $this->getReviews();
+$curPage  = $this->getCurrentPage();
+$lastPage = $this->getLastPage();
+$product  = $this->getCurrentProduct();
+$schema   = $this->getProductSchemaJson();
+?>
+
+<?php if ($schema): ?>
+<script type="application/ld+json"><?php echo $schema; ?></script>
+<?php endif; ?>
+
+<div class="cr-wrapper cr-wrapper--product" id="ultradev-customerreview">
+<div class="cr-inner">
+<div class="cr-layout">
+
+    <div class="cr-sidebar">
+
+        <div class="cr-global-box">
+            <svg class="cr-svg cr-svg--large" viewBox="0 0 100 100">
+                <path fill="none" stroke-width="7" stroke="#f2f2f2"
+                      d="M50 10 a 40 40 0 0 1 0 80 a 40 40 0 0 1 0 -80"/>
+                <path fill="none" class="cr-progress" stroke-linecap="round"
+                      stroke-width="7" stroke="#ffca00"
+                      d="M50 10 a 40 40 0 0 1 0 80 a 40 40 0 0 1 0 -80"
+                      data-percent="<?php echo $agg['avg_percent']; ?>"
+                      style="stroke-dasharray:251.327,251.327;stroke-dashoffset:<?php echo $agg['dash_offset']; ?>"/>
+                <text x="50" y="50"
+      text-anchor="middle"
+      dominant-baseline="middle"
+      font-size="26"
+      fill="#ffca00"
+      font-weight="bold">
+                    <?php echo number_format($agg['avg_stars'], 1); ?>
+                </text>
+                <!-- ================================================
+                 MODAL — ajust text inside circle on product page
+                 ================================================ -->
+                 */
+                <text x="50" y="64" text-anchor="middle" font-size="7" fill="#666">avaliação do</text>
+                <text x="50" y="74" text-anchor="middle" font-size="7" fill="#666">produto</text>
+            </svg>
+            <p class="cr-total-label">
+                <strong><?php echo $agg['total']; ?></strong>
+                avaliações de clientes
+            </p>
+        </div>
+
+        <div class="cr-distribution cr-distribution--static">
+            <?php for ($star = 5; $star >= 1; $star--): ?>
+            <div class="cr-dist-row">
+                <span class="cr-dist-stars">
+                    <?php for ($s = 1; $s <= 5; $s++): ?>
+                    <i class="fa fa-star<?php echo $s <= $star ? '' : '-o'; ?>"></i>
+                    <?php endfor; ?>
+                </span>
+                <span class="cr-dist-bar">
+                    <span class="cr-dist-bar__fill"
+                          style="width:<?php echo $agg['distribution'][$star]; ?>%"></span>
+                </span>
+                <span class="cr-dist-pct">
+                    <?php echo number_format($agg['distribution'][$star], 1); ?>%
+                </span>
+            </div>
+            <?php endfor; ?>
+        </div>
+
+        <button class="cr-btn-avaliar" id="crBtnAvaliar" type="button">
+            Avaliar este produto
+        </button>
+
+    </div>
+
+    <div class="cr-main">
+
+        <h2 class="cr-page-title cr-page-title--product">
+            Avaliações dos clientes
+        </h2>
+
+        <?php if (empty($reviews)): ?>
+        <p class="cr-empty">Nenhuma avaliação ainda. Seja o primeiro a avaliar!</p>
+        <?php else: ?>
+
+        <ul class="cr-list">
+            <?php foreach ($reviews as $item): ?>
+            <li class="cr-item">
+
+                <div class="cr-author">
+                    <div class="cr-author__icon">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                    <div class="cr-author__name">
+                        <?php echo $this->escapeHtml($item['nickname']); ?>
+                    </div>
+                    <?php if ($item['reviewer_city'] || $item['reviewer_region']): ?>
+                    <div class="cr-author__location">
+                        <i class="fa fa-map-marker"></i>
+                        <?php
+                        $loc = array_filter([$item['reviewer_city'], $item['reviewer_region']]);
+                        echo $this->escapeHtml(implode(', ', $loc));
+                        ?>
+                    </div>
+                    <?php endif; ?>
+                    <div class="cr-author__stars">
+                        <?php for ($s = 1; $s <= 5; $s++): ?>
+                        <i class="fa fa-star<?php echo $s <= $item['star_int'] ? '' : '-o'; ?>"></i>
+                        <?php endfor; ?>
+                    </div>
+                </div>
+
+                <div class="cr-content">
+                    <span class="cr-date">
+                        Avaliado em
+                        <time datetime="<?php echo $this->escapeHtml($item['created_at']); ?>">
+                            <?php echo $helper->formatDate($item['created_at']); ?>
+                        </time>
+                    </span>
+                    <?php if ($item['title'] !== ''): ?>
+                    <p class="cr-content__label">Resumo</p>
+                    <p class="cr-content__text"><?php echo $this->escapeHtml($item['title']); ?></p>
+                    <?php endif; ?>
+                    <?php if ($item['detail'] !== ''): ?>
+                    <p class="cr-content__label">Avaliação</p>
+                    <p class="cr-content__text"><?php echo nl2br($this->escapeHtml($item['detail'])); ?></p>
+                    <?php endif; ?>
+                </div>
+
+                <div class="cr-score-box">
+    <svg class="cr-svg cr-svg--small" viewBox="0 0 100 100">
+
+        <path fill="none" stroke-width="8" stroke="#f2f2f2"
+              d="M50 10 a 40 40 0 0 1 0 80 a 40 40 0 0 1 0 -80"/>
+
+        <path fill="none" class="cr-progress" stroke-linecap="round"
+              stroke-width="8" stroke="#ffca00"
+              d="M50 10 a 40 40 0 0 1 0 80 a 40 40 0 0 1 0 -80"
+              data-percent="<?php echo $item['avg_percent']; ?>"
+              style="stroke-dasharray:251.327,251.327;stroke-dashoffset:<?php echo $item['dash_offset']; ?>"/>
+
+        <text x="50"
+              y="38"
+              text-anchor="middle"
+              dominant-baseline="middle"
+              font-size="11"
+              fill="#999">
+            Nota
+        </text>
+
+        <text x="50"
+              y="58"
+              text-anchor="middle"
+              dominant-baseline="middle"
+              font-size="28"
+              fill="#ffca00"
+              font-weight="bold">
+            <?php echo number_format($item['avg_stars'], 1); ?>
+        </text>
+
+    </svg>
+</div>
+
+                <script type="application/ld+json">
+                <?php echo $this->getReviewSchemaJson($item); ?>
+                </script>
+
+            </li>
+            <?php endforeach; ?>
+        </ul>
+
+        <?php if ($lastPage > 1): ?>
+        <nav class="cr-pagination" aria-label="Páginas de avaliações">
+            <?php if ($curPage > 1): ?>
+            <a class="cr-page-btn" href="<?php echo $this->getPageUrl($curPage - 1); ?>">
+                <i class="fa fa-chevron-left"></i>
+            </a>
+            <?php endif; ?>
+            <?php for ($p = 1; $p <= $lastPage; $p++): ?>
+            <?php if ($p === $curPage): ?>
+            <span class="cr-page-btn cr-page-btn--active"><?php echo $p; ?></span>
+            <?php else: ?>
+            <a class="cr-page-btn" href="<?php echo $this->getPageUrl($p); ?>"><?php echo $p; ?></a>
+            <?php endif; ?>
+            <?php endfor; ?>
+            <?php if ($curPage < $lastPage): ?>
+            <a class="cr-page-btn" href="<?php echo $this->getPageUrl($curPage + 1); ?>">
+                <i class="fa fa-chevron-right"></i>
+            </a>
+            <?php endif; ?>
+        </nav>
+        <?php endif; ?>
+
+        <?php endif; ?>
+    </div><!-- .cr-main -->
+
+</div><!-- .cr-layout -->
+</div><!-- .cr-inner -->
+
+<!-- ================================================
+     MODAL — dentro do wrapper para herdar o CSS
+     ================================================ -->
+<div class="cr-modal-overlay" id="crModalOverlay" role="dialog" aria-modal="true" aria-label="Avaliar produto">
+    <div class="cr-modal-box">
+        <button class="cr-modal-close" id="crModalClose" type="button" aria-label="Fechar">&times;</button>
+
+        <p class="cr-modal-title">Avalie este produto</p>
+        <p class="cr-modal-product"><?php echo $this->escapeHtml($this->getProductName()); ?></p>
+
+        <form action="<?php echo $this->getReviewFormUrl(); ?>" method="post" id="crReviewForm">
+            <input type="hidden" name="form_key" value="<?php echo $this->getFormKey(); ?>"/>
+            <input type="hidden" name="id" value="<?php echo (int) $product->getId(); ?>"/>
+
+            <?php
+            $ratings = Mage::getModel('rating/rating')
+                ->getResourceCollection()
+                ->addEntityFilter('product')
+                ->setPositionOrder()
+                ->addRatingPerStoreName(Mage::app()->getStore()->getId())
+                ->setStoreFilter(Mage::app()->getStore()->getId())
+                ->load();
+            ?>
+            <div class="cr-modal-stars-wrap">
+    <?php $firstRating = true; ?>
+    <?php foreach ($ratings as $rating): ?>
+    <?php
+    $options  = $rating->getOptions();
+    $optArr   = [];
+    foreach ($options as $opt) { $optArr[] = $opt; }
+    $ratingId = $rating->getId();
+    ?>
+    <div class="cr-modal-rating-row<?php echo $firstRating ? '' : ' cr-rating-hidden'; ?>"
+         data-rating-id="<?php echo $ratingId; ?>">
+        <?php foreach (array_reverse($optArr) as $i => $option): ?>
+        <input type="radio"
+               name="ratings[<?php echo $ratingId; ?>]"
+               id="cr_rating_<?php echo $ratingId; ?>_<?php echo $option->getId(); ?>"
+               value="<?php echo $option->getId(); ?>"
+               class="cr-star-input"
+               data-value="<?php echo $option->getValue(); ?>"
+               <?php echo ($i === 0) ? 'checked' : ''; ?>>
+        <label for="cr_rating_<?php echo $ratingId; ?>_<?php echo $option->getId(); ?>"
+               title="<?php echo $option->getValue(); ?> estrela(s)">★</label>
+        <?php endforeach; ?>
+    </div>
+    <?php $firstRating = false; ?>
+    <?php endforeach; ?>
+</div>
+
+            <!-- Nome e Sobrenome -->
+            <div class="cr-modal-row">
+                <div class="cr-modal-field">
+                    <label for="crNome">Nome</label>
+                    <input type="text" id="crNome" name="nickname" placeholder="João" required/>
+                </div>
+                <div class="cr-modal-field">
+                    <label for="crSobrenome">Sobrenome</label>
+                    <input type="text" id="crSobrenome" name="sobrenome" placeholder="Silva"/>
+                </div>
+            </div>
+
+            <!-- Cidade e Estado -->
+            <div class="cr-modal-row">
+                <div class="cr-modal-field">
+                    <label for="crCidade">Cidade</label>
+                    <input type="text" id="crCidade" name="reviewer_city" placeholder="São Paulo"/>
+                </div>
+                <div class="cr-modal-field">
+                    <label for="crEstado">Estado</label>
+                    <input type="text" id="crEstado" name="reviewer_region" placeholder="SP" maxlength="2"/>
+                </div>
+            </div>
+
+            <!-- E-mail -->
+            <div class="cr-modal-field cr-modal-field--full">
+                <label for="crEmail">E-mail</label>
+                <input type="email" id="crEmail" name="email" placeholder="seuemail@exemplo.com" required/>
+            </div>
+
+            <!-- Resumo (title) -->
+            <div class="cr-modal-field cr-modal-field--full">
+                <label for="crTitle">Resumo da sua experiência</label>
+                <input type="text" id="crTitle" name="title"
+                       placeholder="Descreva brevemente..." required/>
+            </div>
+
+            <!-- Avaliação (detail) -->
+            <div class="cr-modal-field cr-modal-field--full">
+                <label for="crDetail">Avaliação completa</label>
+                <textarea id="crDetail" name="detail" rows="4"
+                          placeholder="Conte sobre a qualidade, pontos positivos, uso..." required></textarea>
+            </div>
+
+            <button type="submit" class="cr-modal-submit">Enviar avaliação</button>
+        </form>
+    </div>
+</div>
+
+</div><!-- .cr-wrapper -->
+
+<script>
+(function () {
+    var total = 251.327;
+    document.querySelectorAll('#ultradev-customerreview .cr-progress').forEach(function (path) {
+        var pct    = parseFloat(path.getAttribute('data-percent')) || 0;
+        var offset = total - (total * pct / 100);
+        path.style.setProperty('--cr-offset', offset);
+    });
+
+    var btn     = document.getElementById('crBtnAvaliar');
+    var overlay = document.getElementById('crModalOverlay');
+    var close   = document.getElementById('crModalClose');
+
+    if (!btn || !overlay) return;
+
+    btn.addEventListener('click', function () {
+        overlay.classList.add('cr-modal--open');
+        document.body.style.overflow = 'hidden';
+    });
+
+    function closeModal() {
+        overlay.classList.remove('cr-modal--open');
+        document.body.style.overflow = '';
+    }
+
+    close.addEventListener('click', closeModal);
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeModal();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    var visibleRow = document.querySelector('#ultradev-customerreview .cr-modal-rating-row:not(.cr-rating-hidden)');
+    if (visibleRow) {
+        visibleRow.querySelectorAll('.cr-star-input').forEach(function (input) {
+            input.addEventListener('change', function () {
+                var selectedValue = parseInt(this.getAttribute('data-value'));
+                document.querySelectorAll('#ultradev-customerreview .cr-rating-hidden .cr-star-input').forEach(function (hiddenInput) {
+                    if (parseInt(hiddenInput.getAttribute('data-value')) === selectedValue) {
+                        hiddenInput.checked = true;
+                    }
+                });
+            });
+        });
+    }
+})();
+</script>
